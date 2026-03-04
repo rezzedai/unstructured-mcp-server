@@ -1,14 +1,53 @@
 # Unstructured MCP Server
 
-An [MCP](https://modelcontextprotocol.io/) server that gives AI agents the ability to read and process complex documents using [Unstructured.io](https://unstructured.io/). Extract structured content from PDFs, PowerPoints, HTML, images, and more — including tables that other parsers break on.
+[![CI](https://github.com/rezzedai/unstructured-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/rezzedai/unstructured-mcp-server/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+An [MCP](https://modelcontextprotocol.io/) server that gives AI agents the ability to read and 
+process complex documents using [Unstructured.io](https://unstructured.io/). Extract structured 
+content from PDFs, PowerPoints, HTML, images, and more — including tables that other parsers 
+break on.
 
 ## Features
 
-- **`partition_document`** — Extract structured elements from any document format (PDF, PPTX, DOCX, HTML, images, etc.)
-- **`chunk_document`** — Partition and chunk documents for RAG pipelines with semantic boundary detection
+- **`partition_document`** — Extract structured elements from any document format (PDF, PPTX, 
+  DOCX, HTML, images, etc.)
+- **`chunk_document`** — Partition and chunk documents for RAG pipelines with semantic boundary 
+  detection
 - **`extract_tables`** — Focused table extraction with markdown, JSON, or CSV output
-- **Dual mode** — Works locally (no API key needed) or with the Unstructured hosted API for production workloads
-- **Smart strategy selection** — Auto-detects when high-resolution processing is needed (scanned docs, images) vs. fast mode
+- **Dual mode** — Works locally (no API key needed) or with the Unstructured hosted API for 
+  production workloads
+- **Smart strategy selection** — Auto-detects when high-resolution processing is needed (scanned 
+  docs, images) vs. fast mode
+
+## Why This Exists
+
+Document processing is table stakes for AI agents — but most tools treat it as an afterthought. 
+PDFs get dumped as raw text, tables lose their structure, and scanned documents are ignored 
+entirely.
+
+This server bridges that gap by exposing Unstructured's document intelligence as MCP tools that 
+any AI agent can call natively. No custom integration code, no preprocessing scripts — just wire 
+it up and ask your agent to read a document.
+
+## Architecture
+
+```
+┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
+│   AI Agent      │────▶│  MCP Server          │────▶│  Unstructured SDK   │
+│   (Claude, etc) │◀────│  (FastMCP)           │◀────│  or Hosted API      │
+│                 │     │                      │     │                     │
+│  "Read this PDF"│     │  partition_document  │     │  OCR, layout        │
+│                 │     │  chunk_document      │     │  analysis, table    │
+│                 │     │  extract_tables      │     │  detection          │
+└─────────────────┘     └──────────────────────┘     └─────────────────────┘
+```
+
+The server is a thin, focused layer — it doesn't try to be smart about documents. It delegates 
+that entirely to Unstructured's SDK, which has years of investment in layout analysis, OCR, and 
+table detection. The MCP layer handles input resolution (local files or URLs), output formatting, 
+and strategy selection.
 
 ## Quick Start
 
@@ -85,7 +124,8 @@ Extract structured elements from any document.
 | `strategy` | string | `auto` | `hi_res`, `fast`, or `auto` |
 | `output_format` | string | `json` | `json`, `markdown`, or `text` |
 
-Returns elements with type (Title, NarrativeText, Table, ListItem, etc.), text, and metadata (page number, coordinates).
+Returns elements with type (Title, NarrativeText, Table, ListItem, etc.), text, and metadata 
+(page number, coordinates).
 
 ### `chunk_document`
 
@@ -114,21 +154,27 @@ Focused table extraction — handles complex layouts, merged cells, nested table
 
 The server wraps the Unstructured SDK with two processing modes:
 
-**Local mode** (default) — Uses the `unstructured` Python package directly. No API key needed. Good for development, privacy-sensitive documents, and offline use.
+**Local mode** (default) — Uses the `unstructured` Python package directly. No API key needed. 
+Good for development, privacy-sensitive documents, and offline use.
 
-**API mode** — When `UNSTRUCTURED_API_KEY` is set, routes processing through Unstructured's hosted service. Better OCR, more robust handling of complex layouts, and support for the full range of document types.
+**API mode** — When `UNSTRUCTURED_API_KEY` is set, routes processing through Unstructured's 
+hosted service. Better OCR, more robust handling of complex layouts, and support for the full 
+range of document types.
 
 The server auto-detects: if the API key is set, it uses the API. Otherwise, it processes locally.
 
 ### Strategy Selection
 
-- **`auto`** (default) — Inspects the file and picks the best strategy. Images and large PDFs get `hi_res`; everything else gets `fast`.
-- **`hi_res`** — Best quality. Uses OCR for scanned docs, handles complex tables and layouts. Slower.
+- **`auto`** (default) — Inspects the file and picks the best strategy. Images and large PDFs 
+  get `hi_res`; everything else gets `fast`.
+- **`hi_res`** — Best quality. Uses OCR for scanned docs, handles complex tables and layouts. 
+  Slower.
 - **`fast`** — Speed-optimized. Great for digital-native PDFs and text-heavy documents.
 
 ## Supported Formats
 
-PDF, DOCX, PPTX, XLSX, HTML, XML, TXT, CSV, TSV, RTF, EML, MSG, PNG, JPG, TIFF, BMP, EPUB, ODT, RST, MD
+PDF, DOCX, PPTX, XLSX, HTML, XML, TXT, CSV, TSV, RTF, EML, MSG, PNG, JPG, TIFF, BMP, EPUB, ODT, 
+RST, MD
 
 ## Development
 
@@ -142,6 +188,16 @@ pytest -v
 
 # Lint
 ruff check src/ tests/
+```
+
+### Running the server
+
+```bash
+# Start in stdio mode (default for MCP)
+python -m unstructured_mcp.server
+
+# Or use the installed entry point
+unstructured-mcp-server
 ```
 
 ## Docker
