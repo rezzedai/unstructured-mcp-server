@@ -15,7 +15,7 @@ logger = logging.getLogger("unstructured-mcp")
 
 mcp = FastMCP(
     "unstructured",
-    description="Document processing with Unstructured.io — partition, chunk, and extract tables from any document format",
+    instructions="Document processing with Unstructured.io — partition, chunk, and extract tables from any document format",
 )
 
 
