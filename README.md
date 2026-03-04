@@ -26,6 +26,12 @@ cd unstructured-mcp-server
 pip install -e .
 ```
 
+For offline environments, pre-download the required spaCy model:
+
+```bash
+python -m spacy download en_core_web_sm
+```
+
 ### Configure
 
 Add to your Claude Code MCP config (`~/.claude.json` or project `.mcp.json`):
@@ -34,7 +40,7 @@ Add to your Claude Code MCP config (`~/.claude.json` or project `.mcp.json`):
 {
   "mcpServers": {
     "unstructured": {
-      "command": "python",
+      "command": "python3",
       "args": ["-m", "unstructured_mcp.server"]
     }
   }
@@ -47,7 +53,7 @@ For the hosted API (better OCR, complex layouts):
 {
   "mcpServers": {
     "unstructured": {
-      "command": "python",
+      "command": "python3",
       "args": ["-m", "unstructured_mcp.server"],
       "env": {
         "UNSTRUCTURED_API_KEY": "your-api-key",
