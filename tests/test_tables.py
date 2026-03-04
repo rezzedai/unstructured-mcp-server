@@ -1,6 +1,7 @@
 """Tests for extract_tables tool."""
 
 import json
+
 import pytest
 
 from unstructured_mcp.server import extract_tables
