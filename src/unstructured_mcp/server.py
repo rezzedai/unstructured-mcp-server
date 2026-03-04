@@ -6,16 +6,19 @@ import time
 
 from mcp.server.fastmcp import FastMCP
 
-from .partitioner import partition, PartitionResult
-from .chunker import chunk, ChunkResult
-from .utils import resolve_input, OutputFormat
+from .chunker import ChunkResult, chunk
+from .partitioner import PartitionResult, partition
+from .utils import resolve_input
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("unstructured-mcp")
 
 mcp = FastMCP(
     "unstructured",
-    instructions="Document processing with Unstructured.io — partition, chunk, and extract tables from any document format",
+    instructions=(
+        "Document processing with Unstructured.io — partition, chunk, "
+        "and extract tables from any document format"
+    ),
 )
 
 
@@ -52,22 +55,32 @@ async def partition_document(
     strategy: str = "auto",
     output_format: str = "json",
 ) -> str:
-    """Extract structured elements from any document (PDF, PPTX, HTML, images, etc.).
+    """Extract structured elements from any document (PDF, PPTX, HTML, etc.).
 
     Args:
         file_path: Local path to the document file.
-        url: Remote URL to fetch and partition. One of file_path or url required.
-        strategy: Partitioning strategy — "hi_res" (best quality, slower), "fast" (speed), or "auto" (default, auto-detects).
-        output_format: Output format — "json" (structured elements), "markdown", or "text".
+        url: Remote URL to fetch and partition. One of file_path or url
+            required.
+        strategy: Partitioning strategy — "hi_res" (best quality, slower),
+            "fast" (speed), or "auto" (default, auto-detects).
+        output_format: Output format — "json" (structured elements),
+            "markdown", or "text".
 
     Returns:
         Extracted document elements with type, text content, and metadata.
     """
     if strategy not in ("hi_res", "fast", "auto"):
-        return json.dumps({"error": f"Invalid strategy '{strategy}'. Use: hi_res, fast, auto"})
+        return json.dumps(
+            {"error": f"Invalid strategy '{strategy}'. Use: hi_res, fast, auto"}
+        )
     if output_format not in ("json", "markdown", "text"):
         return json.dumps(
-            {"error": f"Invalid output_format '{output_format}'. Use: json, markdown, text"}
+            {
+                "error": (
+                    f"Invalid output_format '{output_format}'. "
+                    "Use: json, markdown, text"
+                )
+            }
         )
 
     start = time.time()
@@ -102,7 +115,9 @@ async def partition_document(
             )
         return output
     except FileNotFoundError as e:
-        return json.dumps({"error": str(e), "suggestion": "Check that the file path is correct."})
+        return json.dumps(
+            {"error": str(e), "suggestion": "Check that the file path is correct."}
+        )
     except Exception as e:
         logger.error("Partition failed: %s", e)
         return json.dumps({"error": str(e)})
@@ -117,13 +132,17 @@ async def chunk_document(
     max_characters: int = 1000,
     overlap: int = 200,
 ) -> str:
-    """Partition and chunk a document for RAG pipelines. Chunks by semantic boundaries (titles/sections).
+    """Partition and chunk a document for RAG pipelines.
+
+    Chunks by semantic boundaries (titles/sections).
 
     Args:
         file_path: Local path to the document file.
         url: Remote URL to fetch and chunk. One of file_path or url required.
-        strategy: Partitioning strategy — "hi_res", "fast", or "auto" (default).
-        chunk_strategy: Chunking method — "by_title" (semantic, default) or "basic" (fixed-size).
+        strategy: Partitioning strategy — "hi_res", "fast", or "auto"
+            (default).
+        chunk_strategy: Chunking method — "by_title" (semantic, default)
+            or "basic" (fixed-size).
         max_characters: Maximum chunk size in characters (default: 1000).
         overlap: Character overlap between chunks (default: 200).
 
@@ -177,12 +196,16 @@ async def extract_tables(
     url: str | None = None,
     output_format: str = "markdown",
 ) -> str:
-    """Extract tables from a document. Handles complex table layouts that other parsers break on.
+    """Extract tables from a document.
+
+    Handles complex table layouts that other parsers break on.
 
     Args:
         file_path: Local path to the document file.
-        url: Remote URL to fetch and extract tables from. One of file_path or url required.
-        output_format: Table output format — "markdown" (default), "json", or "csv".
+        url: Remote URL to fetch and extract tables from. One of file_path
+            or url required.
+        output_format: Table output format — "markdown" (default), "json",
+            or "csv".
 
     Returns:
         Extracted tables with headers, rows, and page location.
@@ -205,7 +228,10 @@ async def extract_tables(
 
         elapsed = time.time() - start
         logger.info(
-            "Extracted %d tables from %s, %.1fs", len(tables), file_path or url, elapsed
+            "Extracted %d tables from %s, %.1fs",
+            len(tables),
+            file_path or url,
+            elapsed,
         )
 
         formatted_tables = []
@@ -223,7 +249,10 @@ async def extract_tables(
         if output_format == "csv":
             lines = []
             for t in formatted_tables:
-                lines.append(f"--- Table {t['index']} (page {t.get('page_number', '?')}) ---")
+                lines.append(
+                    f"--- Table {t['index']} "
+                    f"(page {t.get('page_number', '?')}) ---"
+                )
                 lines.append(t["text"])
                 lines.append("")
             return "\n".join(lines)
@@ -231,7 +260,8 @@ async def extract_tables(
             lines = []
             for t in formatted_tables:
                 lines.append(
-                    f"### Table {t['index'] + 1} (page {t.get('page_number', '?')})"
+                    f"### Table {t['index'] + 1} "
+                    f"(page {t.get('page_number', '?')})"
                 )
                 lines.append("")
                 lines.append(t["text"])
